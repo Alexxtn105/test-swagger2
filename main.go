@@ -3,11 +3,13 @@
 package main
 
 import (
+	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	h "test-swagger2/handlers"
-
-	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // @title						Я, Golang-инженер
@@ -44,9 +46,21 @@ func main() {
 	})
 	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
-	log.Println("Запустили сервер")
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	log.Println("Запускаем сервер")
+
+	go func() {
+		err := http.ListenAndServe(":8080", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+	log.Println("Сервер запущен. Адрес: http://localhost:8080")
+
+	chanSignal := make(chan os.Signal, 1)
+
+	signal.Notify(chanSignal, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	<-chanSignal
+
+	log.Println("Сервер остановлен")
+
 }
